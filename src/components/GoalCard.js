@@ -1,4 +1,4 @@
-// src/components/GoalCard.js - Individual goal display component
+// src/components/GoalCard.js - Individual goal display component with pink theme
 import { Check, X } from 'lucide-react';
 import React from 'react';
 import { formatDate, getPriorityColor } from '../utils/helpers';
@@ -6,8 +6,8 @@ import { formatDate, getPriorityColor } from '../utils/helpers';
 const GoalCard = ({ goal, onToggle, onDelete }) => {
   return (
     <div
-      className={`bg-white rounded-lg shadow-md p-6 border-l-4 transition-all hover:shadow-lg ${
-        goal.completed ? 'border-green-500 bg-green-50' : 'border-indigo-500'
+      className={`card transition-all duration-300 ${
+        goal.completed ? 'border-l-emerald-400 bg-emerald-50/30' : 'border-l-primary-400'
       }`}
     >
       <div className="flex items-start justify-between">
@@ -15,25 +15,25 @@ const GoalCard = ({ goal, onToggle, onDelete }) => {
           <div className="flex items-center gap-3 mb-2">
             <button
               onClick={() => onToggle(goal.id)}
-              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                 goal.completed
-                  ? 'bg-green-500 border-green-500 text-white'
-                  : 'border-gray-300 hover:border-indigo-500'
+                  ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg'
+                  : 'border-gray-300 hover:border-primary-400 hover:shadow-md'
               }`}
             >
               {goal.completed && <Check className="w-4 h-4" />}
             </button>
-            <h3 className={`text-lg font-semibold ${
+            <h3 className={`text-lg font-semibold transition-all duration-200 ${
               goal.completed ? 'text-gray-500 line-through' : 'text-gray-800'
             }`}>
               {goal.title}
             </h3>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(goal.priority)}`}>
+            <span className={`priority-badge ${getPriorityColor(goal.priority)}`}>
               {goal.priority}
             </span>
           </div>
           {goal.description && (
-            <p className={`text-gray-600 mb-2 ${goal.completed ? 'line-through' : ''}`}>
+            <p className={`text-gray-600 mb-2 transition-all duration-200 ${goal.completed ? 'line-through opacity-75' : ''}`}>
               {goal.description}
             </p>
           )}
@@ -43,7 +43,7 @@ const GoalCard = ({ goal, onToggle, onDelete }) => {
         </div>
         <button
           onClick={() => onDelete(goal.id)}
-          className="text-red-500 hover:text-red-700 p-2 transition-colors"
+          className="text-rose-400 hover:text-rose-600 p-2 transition-colors rounded-lg hover:bg-rose-50"
         >
           <X className="w-5 h-5" />
         </button>

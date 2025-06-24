@@ -2,13 +2,13 @@
 export const getPriorityColor = (priority) => {
     switch (priority) {
       case 'high':
-        return 'text-red-600 bg-red-50 border-red-200';
+        return 'priority-high';
       case 'medium':
-        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+        return 'priority-medium';
       case 'low':
-        return 'text-green-600 bg-green-50 border-green-200';
+        return 'priority-low';
       default:
-        return 'text-gray-600 bg-gray-50 border-gray-200';
+        return 'bg-gray-100/80 text-gray-600 border-gray-300';
     }
   };
   

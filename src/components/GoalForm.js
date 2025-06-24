@@ -1,4 +1,4 @@
-// src/components/GoalForm.js - Goal creation form component
+// src/components/GoalForm.js - Goal creation form component with pink theme
 import React, { useState } from 'react';
 
 const GoalForm = ({ onSubmit, onCancel }) => {
@@ -20,61 +20,63 @@ const GoalForm = ({ onSubmit, onCancel }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 mb-6 border-l-4 border-indigo-500">
-      <h3 className="text-lg font-semibold mb-4 text-gray-800">Add New Goal</h3>
+    <div className="card mb-6 border-l-4 border-primary-400">
+      <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+        ✨ Add New Goal
+      </h3>
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Goal Title
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            🎯 Goal Title
           </label>
           <input
             type="text"
             value={formData.title}
             onChange={(e) => handleInputChange('title', e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder="Enter your goal..."
+            className="input-field"
+            placeholder="What do you want to achieve?"
           />
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Description
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            📝 Description
           </label>
           <textarea
             value={formData.description}
             onChange={(e) => handleInputChange('description', e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            className="input-field"
             rows="3"
-            placeholder="Describe your goal..."
+            placeholder="Tell us more about your goal..."
           />
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Priority
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            🔥 Priority
           </label>
           <select
             value={formData.priority}
             onChange={(e) => handleInputChange('priority', e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            className="input-field"
           >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
+            <option value="low">🟢 Low Priority</option>
+            <option value="medium">🟡 Medium Priority</option>
+            <option value="high">🔴 High Priority</option>
           </select>
         </div>
         
-        <div className="flex gap-3">
+        <div className="flex gap-3 pt-2">
           <button
             onClick={handleSubmit}
             disabled={!formData.title.trim()}
-            className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
+            className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
-            Add Goal
+            ✨ Add Goal
           </button>
           <button
             onClick={onCancel}
-            className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg font-semibold transition-colors"
+            className="btn-secondary"
           >
             Cancel
           </button>

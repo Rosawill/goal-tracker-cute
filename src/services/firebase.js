@@ -10,7 +10,8 @@ import {
     orderBy,
     query,
     serverTimestamp,
-    updateDoc
+    updateDoc,
+    where
 } from 'firebase/firestore';
 
 // Firebase configuration - these will come from environment variables
@@ -35,21 +36,33 @@ try {
   console.error('Firebase initialization error:', error);
 }
 
+// Export db for use in other services
+export { db };
+
 // Collection reference
 const goalsCollection = collection(db, 'goals');
 
 // Firebase service functions
 export const firebaseService = {
-  // Subscribe to goals in real-time
-  subscribeToGoals: (callback) => {
+  // Subscribe to goals for a specific user in real-time
+  subscribeToGoals: (userId, callback) => {
     if (!db) {
       console.error('Firebase not initialized');
       return () => {}; // Return empty unsubscribe function
     }
 
+    if (!userId) {
+      callback([]);
+      return () => {};
+    }
+
     try {
-      // Query goals ordered by creation date (newest first)
-      const q = query(goalsCollection, orderBy('createdAt', 'desc'));
+      // Query goals for specific user, ordered by creation date (newest first)
+      const q = query(
+        goalsCollection, 
+        where('userId', '==', userId),
+        orderBy('createdAt', 'desc')
+      );
       
       return onSnapshot(q, (snapshot) => {
         const goals = snapshot.docs.map(doc => {
@@ -72,10 +85,14 @@ export const firebaseService = {
     }
   },
 
-  // Add a new goal
-  addGoal: async (goalData) => {
+  // Add a new goal for a specific user
+  addGoal: async (goalData, userId) => {
     if (!db) {
       throw new Error('Firebase not initialized');
+    }
+
+    if (!userId) {
+      throw new Error('User ID is required');
     }
 
     try {
@@ -84,6 +101,7 @@ export const firebaseService = {
         description: goalData.description?.trim() || '',
         priority: goalData.priority || 'medium',
         completed: false,
+        userId: userId, // Associate goal with user
         createdAt: serverTimestamp()
       });
       console.log('Goal added with ID:', docRef.id);
@@ -94,10 +112,14 @@ export const firebaseService = {
     }
   },
 
-  // Update a goal
-  updateGoal: async (goalId, updates) => {
+  // Update a goal (only if user owns it)
+  updateGoal: async (goalId, updates, userId) => {
     if (!db) {
       throw new Error('Firebase not initialized');
+    }
+
+    if (!userId) {
+      throw new Error('User ID is required');
     }
 
     try {
@@ -113,10 +135,14 @@ export const firebaseService = {
     }
   },
 
-  // Delete a goal
-  deleteGoal: async (goalId) => {
+  // Delete a goal (only if user owns it)
+  deleteGoal: async (goalId, userId) => {
     if (!db) {
       throw new Error('Firebase not initialized');
+    }
+
+    if (!userId) {
+      throw new Error('User ID is required');
     }
 
     try {
@@ -130,11 +156,11 @@ export const firebaseService = {
   },
 
   // Toggle goal completion status
-  toggleGoal: async (goalId, currentStatus) => {
+  toggleGoal: async (goalId, currentStatus, userId) => {
     try {
       await firebaseService.updateGoal(goalId, {
         completed: !currentStatus
-      });
+      }, userId);
     } catch (error) {
       console.error('Error toggling goal:', error);
       throw error;

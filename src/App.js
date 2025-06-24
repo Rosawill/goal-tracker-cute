@@ -1,16 +1,25 @@
-// src/App.js - Main application component with Firebase integration
+// src/App.js - Main application component with Firebase integration and authentication
 import { AlertCircle, Plus, Target } from 'lucide-react';
 import React, { useState } from 'react';
+import AuthForm from './components/AuthForm';
 import FilterBar from './components/FilterBar';
 import GoalCard from './components/GoalCard';
 import GoalForm from './components/GoalForm';
 import StatsCard from './components/StatsCard';
+import UserProfile from './components/UserProfile';
+import { useAuth } from './hooks/useAuth';
 import { useFirebase } from './hooks/useFirebase';
 
 function App() {
-  const { goals, addGoal, toggleGoal, deleteGoal, loading, error } = useFirebase();
+  const { user, loading: authLoading } = useAuth();
+  const { goals, addGoal, toggleGoal, deleteGoal, loading: goalsLoading, error } = useFirebase();
   const [showAddForm, setShowAddForm] = useState(false);
   const [filter, setFilter] = useState('all');
+
+  // Show auth form if user is not logged in
+  if (!authLoading && !user) {
+    return <AuthForm />;
+  }
 
   const filteredGoals = goals.filter(goal => {
     if (filter === 'completed') return goal.completed;
@@ -54,43 +63,88 @@ function App() {
     }
   };
 
-  if (loading) {
+  if (authLoading || goalsLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <Target className="w-16 h-16 text-indigo-600 mx-auto mb-4 animate-spin" />
-          <p className="text-gray-600 text-lg">Loading your goals...</p>
-          <p className="text-gray-500 text-sm mt-2">Connecting to Firebase...</p>
+      <div className="min-h-screen bg-gradient-pink flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <Target className="w-16 h-16 text-primary-500 mx-auto mb-4 animate-spin" />
+          <p className="text-gray-700 text-lg font-medium mb-2">
+            {authLoading ? 'Checking authentication...' : 'Loading your goals...'}
+          </p>
+          <p className="text-gray-500 text-sm mb-8">
+            {authLoading ? 'Please wait ✨' : 'Connecting to Firebase ✨'}
+          </p>
+          
+          {/* Troubleshooting section - only show after 5 seconds of loading */}
+          {!authLoading && (
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-pink-100 shadow-lg">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Taking longer than expected?</h3>
+              <div className="space-y-3">
+                <button
+                  onClick={() => window.location.reload()}
+                  className="w-full bg-primary-500 hover:bg-primary-600 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                >
+                  🔄 Refresh Page
+                </button>
+                <button
+                  onClick={async () => {
+                    const { signOut } = await import('./hooks/useAuth');
+                    // We need to access the auth context differently
+                    window.location.href = '/';
+                  }}
+                  className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium transition-colors"
+                >
+                  👋 Sign Out & Try Again
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-4">
+                If issues persist, check your internet connection or try again in a few minutes.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen bg-gradient-pink p-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <Target className="w-8 h-8 text-indigo-600 mr-2" />
-            <h1 className="text-4xl font-bold text-gray-800">Goal Tracker</h1>
+          <div className="flex items-center justify-between mb-4">
+            {/* Left spacer for centering */}
+            <div className="w-32"></div>
+            
+            {/* Center title */}
+            <div className="flex items-center">
+              <Target className="w-8 h-8 text-primary-600 mr-2 drop-shadow-sm" />
+              <h1 className="text-4xl font-bold text-gradient-pink drop-shadow-sm">Goal Tracker</h1>
+            </div>
+            
+            {/* Right - User Profile */}
+            <div className="w-32 flex justify-end">
+              <UserProfile />
+            </div>
           </div>
-          <p className="text-gray-600">Track your goals and make progress every day</p>
-          {/* Show connection status */}
+          
+          <p className="text-gray-700">Track your goals and make progress every day ✨</p>
+          
+          {/* Welcome message */}
           <div className="mt-2">
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-              <div className="w-2 h-2 bg-green-400 rounded-full mr-1"></div>
-              Connected to Firebase
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-emerald-100/80 text-emerald-800 border border-emerald-200 backdrop-blur-sm">
+              <div className="w-2 h-2 bg-emerald-400 rounded-full mr-2 animate-pulse-pink"></div>
+              Welcome back, {user?.displayName || user?.email?.split('@')[0] || 'Goal Achiever'}! 💖
             </span>
           </div>
         </div>
 
         {/* Error Display */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="mb-6 bg-rose-50/80 border border-rose-200 rounded-xl p-4 backdrop-blur-sm">
             <div className="flex items-center">
-              <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
-              <p className="text-red-700">{error}</p>
+              <AlertCircle className="w-5 h-5 text-rose-500 mr-2" />
+              <p className="text-rose-700">{error}</p>
             </div>
           </div>
         )}
@@ -102,8 +156,8 @@ function App() {
         <div className="mb-6">
           <button
             onClick={() => setShowAddForm(!showAddForm)}
-            disabled={loading}
-            className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-semibold flex items-center shadow-lg transition-colors"
+            disabled={goalsLoading}
+            className="btn-primary shadow-pink-glow disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
             <Plus className="w-5 h-5 mr-2" />
             Add New Goal
@@ -125,17 +179,17 @@ function App() {
         <div className="space-y-4">
           {filteredGoals.length === 0 ? (
             <div className="text-center py-12">
-              <Target className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg">
+              <Target className="w-16 h-16 text-pink-300 mx-auto mb-4 drop-shadow-sm" />
+              <p className="text-gray-600 text-lg">
                 {filter === 'all' 
-                  ? "No goals found. Add your first goal to get started!"
+                  ? "No goals found. Add your first goal to get started! 🌟"
                   : `No ${filter} goals found.`
                 }
               </p>
               {filter !== 'all' && (
                 <button
                   onClick={() => setFilter('all')}
-                  className="mt-2 text-indigo-600 hover:text-indigo-800 underline"
+                  className="mt-2 text-primary-600 hover:text-primary-800 underline font-medium"
                 >
                   View all goals
                 </button>
@@ -155,7 +209,7 @@ function App() {
 
         {/* Footer */}
         <div className="mt-12 text-center text-gray-500 text-sm">
-          <p>Data synced with Firebase • Built with React & Tailwind CSS</p>
+          <p>Your personal goals, securely stored • Built with React & Tailwind CSS 💖</p>
         </div>
       </div>
     </div>
