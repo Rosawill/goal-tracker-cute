@@ -1,17 +1,17 @@
 // src/services/firebase.js - Firebase configuration and database services
 import { initializeApp } from 'firebase/app';
 import {
-    addDoc,
-    collection,
-    deleteDoc,
-    doc,
-    getFirestore,
-    onSnapshot,
-    orderBy,
-    query,
-    serverTimestamp,
-    updateDoc,
-    where
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getFirestore,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where
 } from 'firebase/firestore';
 
 // Firebase configuration - these will come from environment variables
@@ -46,17 +46,23 @@ const goalsCollection = collection(db, 'goals');
 export const firebaseService = {
   // Subscribe to goals for a specific user in real-time
   subscribeToGoals: (userId, callback) => {
+    console.log('🔥 Setting up goals subscription for user:', userId);
+    
     if (!db) {
-      console.error('Firebase not initialized');
-      return () => {}; // Return empty unsubscribe function
+      console.error('❌ Firebase not initialized');
+      callback([]);
+      return () => {};
     }
 
     if (!userId) {
+      console.log('❌ No userId provided');
       callback([]);
       return () => {};
     }
 
     try {
+      console.log('📋 Creating Firestore query...');
+      
       // Query goals for specific user, ordered by creation date (newest first)
       const q = query(
         goalsCollection, 
@@ -64,24 +70,46 @@ export const firebaseService = {
         orderBy('createdAt', 'desc')
       );
       
-      return onSnapshot(q, (snapshot) => {
-        const goals = snapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            ...data,
-            // Convert Firestore timestamp to ISO string
-            createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString()
-          };
-        });
-        callback(goals);
-      }, (error) => {
-        console.error('Error fetching goals:', error);
-        callback([]); // Return empty array on error
-      });
+      console.log('👂 Setting up onSnapshot listener...');
+      
+      return onSnapshot(q, 
+        (snapshot) => {
+          console.log('📊 Firestore snapshot received, docs:', snapshot.docs.length);
+          
+          const goals = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              // Convert Firestore timestamp to ISO string
+              createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString()
+            };
+          });
+          
+          console.log('✅ Goals processed:', goals.length);
+          callback(goals);
+        }, 
+        (error) => {
+          console.error('❌ Firestore subscription error:', error);
+          console.error('Error code:', error.code);
+          console.error('Error message:', error.message);
+          
+          // Check for specific error types
+          if (error.code === 'failed-precondition') {
+            console.error('🚨 INDEX MISSING! You need to create a composite index.');
+            console.error('Go to Firebase Console → Firestore → Indexes');
+            console.error('Create index for collection "goals" with fields: userId (asc), createdAt (desc)');
+          } else if (error.code === 'permission-denied') {
+            console.error('🚨 PERMISSION DENIED! Check your Firestore security rules.');
+          }
+          
+          callback([]); // Return empty array on error
+        }
+      );
     } catch (error) {
-      console.error('Error setting up subscription:', error);
-      return () => {}; // Return empty unsubscribe function
+      console.error('❌ Error setting up subscription:', error);
+      callback([]);
+      return () => {};
     }
   },
 
@@ -102,6 +130,13 @@ export const firebaseService = {
         priority: goalData.priority || 'medium',
         completed: false,
         userId: userId, // Associate goal with user
+        
+        // NEW: Timeline fields
+        dueDate: goalData.dueDate || null, // ISO string or null
+        goalType: goalData.goalType || 'custom', // 'daily', 'weekly', 'monthly', 'custom'
+        isRecurring: goalData.isRecurring || false,
+        recurringType: goalData.recurringType || null, // 'daily', 'weekly', 'monthly'
+        
         createdAt: serverTimestamp()
       });
       console.log('Goal added with ID:', docRef.id);

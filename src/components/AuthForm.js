@@ -44,8 +44,7 @@ const AuthForm = () => {
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     clearError();
 
     if (!validateForm()) return;
@@ -53,18 +52,24 @@ const AuthForm = () => {
     try {
       let result;
       if (isSignUp) {
+        console.log('🆕 Attempting to sign up with:', formData.email);
         result = await signUp(formData.email, formData.password, formData.displayName);
       } else {
+        console.log('🔑 Attempting to sign in with:', formData.email);
         result = await signIn(formData.email, formData.password);
       }
 
       if (result.success) {
+        console.log('✅ Authentication successful');
         // Reset form on success
         setFormData({ email: '', password: '', displayName: '', confirmPassword: '' });
         setValidationErrors({});
+      } else {
+        console.error('❌ Authentication failed:', result.error);
+        // Error will be displayed via the error state from useAuth
       }
     } catch (error) {
-      console.error('Authentication error:', error);
+      console.error('❌ Authentication error:', error);
     }
   };
 
@@ -94,12 +99,41 @@ const AuthForm = () => {
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-pink-100">
           {/* Header */}
           <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full mb-4">
+              <span className="text-white text-2xl">
+                {isSignUp ? '✨' : '💖'}
+              </span>
+            </div>
             <h2 className="text-3xl font-bold text-gradient-pink mb-2">
-              {isSignUp ? '✨ Join Goal Tracker' : '💖 Welcome Back'}
+              {isSignUp ? 'Join Goal Tracker' : 'Welcome Back'}
             </h2>
             <p className="text-gray-600">
-              {isSignUp ? 'Start tracking your goals today!' : 'Continue your journey to success'}
+              {isSignUp ? 'Create your account to start tracking goals!' : 'Sign in to continue your journey'}
             </p>
+            
+            {/* Mode indicator */}
+            <div className="mt-4 inline-flex bg-gray-100 rounded-full p-1">
+              <button
+                onClick={() => !isSignUp && toggleAuthMode()}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  !isSignUp 
+                    ? 'bg-white text-primary-600 shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => isSignUp && toggleAuthMode()}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  isSignUp 
+                    ? 'bg-white text-primary-600 shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Sign Up
+              </button>
+            </div>
           </div>
 
           {/* Error Display */}
@@ -107,7 +141,32 @@ const AuthForm = () => {
             <div className="mb-6 bg-rose-50/80 border border-rose-200 rounded-xl p-4 backdrop-blur-sm">
               <div className="flex items-center">
                 <AlertCircle className="w-4 h-4 text-rose-500 mr-2" />
-                <p className="text-rose-700 text-sm">{error}</p>
+                <div className="flex-1">
+                  <p className="text-rose-700 text-sm">{error}</p>
+                  {/* Helpful suggestion for invalid credentials */}
+                  {!isSignUp && error.includes('Invalid email or password') && (
+                    <p className="text-rose-600 text-xs mt-1">
+                      Don't have an account yet?{' '}
+                      <button
+                        onClick={toggleAuthMode}
+                        className="underline font-medium hover:text-rose-800"
+                      >
+                        Create one here
+                      </button>
+                    </p>
+                  )}
+                  {isSignUp && error.includes('already registered') && (
+                    <p className="text-rose-600 text-xs mt-1">
+                      Already have an account?{' '}
+                      <button
+                        onClick={toggleAuthMode}
+                        className="underline font-medium hover:text-rose-800"
+                      >
+                        Sign in here
+                      </button>
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           )}

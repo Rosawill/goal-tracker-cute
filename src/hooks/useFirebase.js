@@ -43,7 +43,7 @@ export const useFirebase = () => {
       unsubscribe();
       clearTimeout(timeoutId);
     };
-  }, [user, loading]);
+  }, [user]); // Remove 'loading' dependency
 
   const addGoal = async (goalData) => {
     if (!user) {
